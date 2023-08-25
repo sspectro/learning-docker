@@ -208,7 +208,7 @@ Linux, Docker
     ---
 
 5. <span style="color:383E42"><b>Rodar um servidor/container web em background</b></span>
-    <!-- <details><summary><span style="color:Chocolate">Detalhes</span></summary> -->
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
     Estando na pasta correta
