@@ -144,6 +144,43 @@ Linux, Docker
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
+    - Difinindo porta que o container vai ser iniciado. Container vai ser exposta a partir da porta definida. Verfica se está ativo
+        ```bash
+        docker container run -p 8080:80 nginx
+        docker container ps
+        ```
+        Testando no navegador
+        [http://localhost:8080/](http://localhost:8080/)
+
+        Testando terminal
+        ```bash
+        curl http://localhost:8080
+        ```
+
+        Parando container/processo. Estando no terminal do container pressione `ctrl + c`. Basta verfiicar novamente se o container está ativo.
+        
+        
+
+    </p>
+
+    </details> 
+
+    ---
+
+4. <span style="color:383E42"><b>Mapeando diretórios para o container</b></span>
+    <!-- <details><summary><span style="color:Chocolate">Detalhes</span></summary> -->
+    <p>
+
+    - Criar diretórios e arquivo `ex-volume/html/index.html`
+
+    - Estando na pasta criada `ex-volume`: `$(pwd)` pasta corrente do host `/html` subpasta - Mapear para `:/usr/share/nginx/html`
+        Vai deixar de apontar para a pasta padrão do `nginx` para apontar para pasta do host.
+        ```bash
+        docker container run -p 8080:80 -v $(pwd)/html:/usr/share/nginx/html nginx
+        ```
+
+        Teste `localhost:8080`
+
     </p>
 
     </details> 
