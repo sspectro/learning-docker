@@ -6,7 +6,7 @@
 Linux, Docker
 ## Desenvolvimento:
 1. <span style="color:383E42"><b>Preparando ambiente</b></span>
-    <!-- <details><summary><span style="color:Chocolate">Detalhes</span></summary> -->
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
     - Instalação Docker
@@ -47,7 +47,7 @@ Linux, Docker
         docker
         docker --help
         ```
-        
+
         - Testar execução de container hello-world - se der permissão negada, adicionar `sudo` início do comando ou crie um grupo(sudo) conforme link [stackoverflow](https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue)
         ```sh
         docker container run hello-world
@@ -66,6 +66,83 @@ Linux, Docker
         ```
 
     - Criar `.dockerignore` para [python](https://gist.github.com/KernelA/04b4d7691f28e264f72e76cfd724d448)
+
+    </p>
+
+    </details> 
+
+    ---
+
+2. <span style="color:383E42"><b>Exemplos com comandos</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    >Comando run sempre cria novos containers
+
+    - Opções de comandos
+        ```bash
+        docker container run --help  
+        ```
+
+    - Lista containers ativos	
+        ```bash
+        docker container ps
+        docker container ls
+        ```
+    - Lista containers que já foram executados, independentet do status atual
+        ```bash
+        docker container ps -a
+        docker container ls -a
+        ```
+    - Executar container marcando para ser removido do histórico de containers executados	
+        ```bash
+        docker container run --rm debian bash --version
+        ```
+
+    - Verifica versão `bash`
+        ```bash
+        - bash --version
+        ```
+
+    - Executa uma imagem do `debian` com comando que verifica versão do `bash` da imagem
+        ```bash
+        docker container run debian bash --version
+        ```
+
+    - Acessar container no modo interativo -  `i` - acesso ao terminal `t`. Acesso ao terminal do container
+        ```bash
+        docker container run -it bash
+        ```
+        - Cria arquivo no container e verifica
+            ```bash
+            touch curso-docker.txt
+            ls
+            ```
+
+        - Sair do container
+            ```bash
+            exit
+            ```
+    
+    - Cria container nomeando
+        ```bash
+        docker container run --name mydeb -it debian bash
+        ```
+    
+    - Iniciar container criado no modo interativo terminal
+        ```bash
+        docker container start -ai mydeb
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+3. <span style="color:383E42"><b>Mapeando portas dos containers - nginx</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
 
     </p>
 
