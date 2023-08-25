@@ -83,12 +83,17 @@ Linux, Docker
         ```bash
         docker container run --help  
         ```
-
     - Lista containers ativos	
         ```bash
         docker container ps
         docker container ls
         ```
+
+    - Parando container
+        ```bash
+        docker container stop nomecontainer
+        ```
+
     - Lista containers que já foram executados, independentet do status atual
         ```bash
         docker container ps -a
@@ -134,6 +139,21 @@ Linux, Docker
         docker container start -ai mydeb
         ```
 
+    - Lista as imagens locais
+        ```bash
+        docker image ls
+        ```
+
+    - Lista as volumes locais
+        ```bash
+        docker volume ls
+        ```
+
+    - Remover imagem usando id ou nome da imagem
+        ```bash
+        docker image rm nomeimage
+        ```
+
     </p>
 
     </details> 
@@ -168,7 +188,7 @@ Linux, Docker
     ---
 
 4. <span style="color:383E42"><b>Mapeando diretórios para o container</b></span>
-    <!-- <details><summary><span style="color:Chocolate">Detalhes</span></summary> -->
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
     - Criar diretórios e arquivo `ex-volume/html/index.html`
@@ -179,7 +199,7 @@ Linux, Docker
         docker container run -p 8080:80 -v $(pwd)/html:/usr/share/nginx/html nginx
         ```
 
-        Teste `localhost:8080`
+        Teste no navegador `localhost:8080`
 
     </p>
 
@@ -187,6 +207,54 @@ Linux, Docker
 
     ---
 
+5. <span style="color:383E42"><b>Rodar um servidor/container web em background</b></span>
+    <!-- <details><summary><span style="color:Chocolate">Detalhes</span></summary> -->
+    <p>
+
+    Estando na pasta correta
+    ```bash
+    docker container run -d --name ex-daemon-basic -p 8080:80 -v $(pwd)/html:/usr/share/nginx/html nginx
+    docker container ps
+    ```
+    
+    Verificar no navegador em `localhost:8080`
+
+    Parando container
+    ```bash
+    docker container stop ex-daemon-basic
+    ```
+
+    - Executar container já criado e verificar
+        ```bsh
+        docker container start ex-daemon-basic
+        docker container ps
+        ```
+
+    - Reiniciar um container e parar: Usar nome ou id do container
+        ```bash
+        docker container restart nomecontainerjacriado
+        docker container stop nomecontainerjacriado
+        ```
+
+    - Mostrar logs do container
+        ```bash
+        docker container logs ex-daemon-basic
+        ```
+    
+    - Listar informações do container - json
+        ```bash
+        docker container inspect ex-daemon-basic
+        ```
+
+    - Verficar tipo de container - sistema que está no container
+        ```bash
+        docker container exec ex-daemon-basic uname -or
+        ```
+    </p>
+
+    </details> 
+
+    ---
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
 >
