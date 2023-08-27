@@ -261,7 +261,7 @@ Linux, Docker
     <p>
 
     >Observação: `Dockerfile` deve ser escrito exatamente assim, primeira letra maiúscula e demais em minúscula
-    - Criar arquivo `Dockerfile` - usa imagem `nginx` - Exibe mensagem no arquivo `index` do nginx
+    - Criar diretório e arquivo `primeiro-build/Dockerfile` - usa imagem `nginx` - Exibe mensagem no arquivo `index` do nginx
         ```
         FROM nginx:latest
         RUN echo '<h1>Hello World</h1>' > /usr/share/nginx/html/index.html
@@ -284,6 +284,49 @@ Linux, Docker
 
     ---
 
+7. <span style="color:383E42"><b>Passando argumentos</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criar diretório e arquivo `build-com-arg/Dockerfile` - usa imagem `debian`
+        ```
+        FROM debian
+        LABEL maintainer 'Aluno Cod3r <aluno at cod3r.com.br>'
+
+        ARG S3_BUCKET=files
+        ENV S3_BUCKET=${S3_BUCKET}
+        ```
+
+    - Criando imagem  `ex-build-arg`
+        ```
+        docker image build -t ex-build-arg .
+        docker image ls
+        ```
+
+    - Executando container e Mostrando o valor padrão configurado para `S3_BUCKET` no `Docker`
+        ```
+        docker container run ex-build-arg bash -c 'echo $S3_BUCKET'
+        ```
+
+    - Criando imagem  `ex-build-arg` passando valor para `$S3_BUCKET'`
+        ```
+        docker image build --build-arg S3_BUCKET=myapp -t ex-build-arg .
+        ```
+    - Executar container novamente 
+        ```
+        docker container run ex-build-arg bash -c 'echo $S3_BUCKET'
+        ```
+
+    - Verificando informação que consta no Dockerfile com `inspect`
+        ```
+        docker image inspect --format="{{index .Config.Labels \"maintainer\"}}" ex-build-arg
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
 
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
