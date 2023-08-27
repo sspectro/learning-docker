@@ -255,6 +255,36 @@ Linux, Docker
     </details> 
 
     ---
+
+6. <span style="color:383E42"><b>Primeiro build</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    >Observação: `Dockerfile` deve ser escrito exatamente assim, primeira letra maiúscula e demais em minúscula
+    - Criar arquivo `Dockerfile` - usa imagem `nginx` - Exibe mensagem no arquivo `index` do nginx
+        ```
+        FROM nginx:latest
+        RUN echo '<h1>Hello World</h1>' > /usr/share/nginx/html/index.html
+        ```
+
+    - Criando imagem  `ex-simple-build` - Deve ficar posicionado no diretório que está o arquivo `Dockerfile`
+        ```bash
+        docker image build -t ex-simple-build .
+        docker image ls
+        ```
+
+    - Rodando imagem - Verficar em `http://localhost/` ou `localhost:80`
+        ```bash
+        docker container run -p 80:80 ex-simple-build
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
 >
