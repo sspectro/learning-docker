@@ -328,6 +328,148 @@ Linux, Docker
 
     ---
 
+8. <span style="color:383E42"><b>Instruções de povoamento - compiando/movendo arquivos</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criação de diretório e arquivo `build-com-copy/index.html`
+        ```html
+        <a href="conteudo.html">Conteudo do site</a>
+        ```
+
+    - Criar arquivo `build-com-copy/Dockerfile`
+        ```
+        FROM nginx:latest
+        LABEL maintainer 'Aluno Cod3r <aluno at cod3r.com.br>'
+
+        RUN echo '<h1>Sem conteudo</h1>' > /usr/share/nginx/html/conteudo.html
+        # Qualquer arquivo .html que estiver na pasta que está esse arquivo(Dockerfile) será compiado para a pasta /usr/share/nginx/html/index.html
+        COPY *.html /usr/share/nginx/html/
+        ```
+
+    - Criando imagem  `ex-build-copy` 
+        ```
+        docker image build -t ex-build-copy .
+        ```
+
+    - Executar container - testar em `localhost`
+        ```
+        docker container run -p 80:80 ex-build-copy
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+9. <span style="color:383E42"><b>Instruções para execução `container` - Acesso volumes outro `container`</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+     - Criação de diretório e arquivo `build-dev/index.html`
+        ```html
+        <p>Hello rom python</p>
+        ```
+
+    - Criação de arquivo python `build-dev/run.py` - servidor python para resposta http
+        ```python
+        import logging
+        import http.server
+        import socketserver
+        import getpass
+
+        class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, format, *args):
+                logging.info("%s - - [%s] %s\n"% (
+                    self.client_address[0],
+                    self.log_date_time_string(),
+                    format%args
+                ))
+
+        logging.basicConfig(
+            filename='/log/http-server.log',
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            level=logging.INFO
+        )
+        logging.getLogger().addHandler(logging.StreamHandler())
+        logging.info('inicializando...')
+        PORT = 8000
+
+        httpd = socketserver.TCPServer(("", PORT), MyHTTPHandler)
+        logging.info('escutando a porta: %s', PORT)
+        logging.info('usuário: %s', getpass.getuser())
+        httpd.serve_forever()
+        ```
+
+    - Criar arquivo `build-dev/Dockerfile`
+        ```python
+        FROM python:3.6
+        LABEL maintainer 'Aluno Cod3r <aluno at cod3r.com.br>'
+
+        RUN useradd www && \
+            mkdir /app && \
+            mkdir /log && \
+            chown www /log
+
+        USER www
+        VOLUME /log
+        WORKDIR /app
+        EXPOSE 8000
+
+        ENTRYPOINT ["/usr/local/bin/python"]
+        CMD ["run.py"]
+        ```
+
+    - Gerando imagem
+        ```bash
+        docker image build -t ex-build-dev .        
+        ```
+    
+    - Executando container - Teste em `localhost`
+        ```bash
+        docker container run -it -v $(pwd):/app -p 80:8000 --name python-server ex-build-dev
+        ```
+
+    - Gerar novo container que acessa volume criado no container anterior
+        ```bash
+        docker container run -it --volumes-from=python-server debian cat /log/http-server.log
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+10. <span style="color:383E42"><b>Enviar Imagens para o [Docker Hub](https://hub.docker.com/)</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Gerando nova `tag` para imagem `ex-simple-build` - informa `nomeusuariodockerhub/nomerepositorio:tag`
+        ```bash
+        docker image tag ex-simple-build sspectrocris/simple-build:1.0
+
+        docker image ls
+        ```
+    - Logar no docker 
+        >Atenção a senha, caso precise usar  `sudo` ao executar comando `docker`, pois irá pedir primeiro a senha de usuário `sudo` da sua máquina local e em seguida a senha do `docker`
+        ```bash
+        docker login --username=sspectrocris
+        ```
+    
+    - Efetuar push para dockerhub
+        Confira no [Docker Hub](https://hub.docker.com/)
+        ```bash
+        sudo docker image push  sspectrocris/simple-build:1.0
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
 >
