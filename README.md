@@ -4,6 +4,9 @@
 
 ## Ambiente de Desenvolvimento
 Linux, Docker
+
+## Documentação - Links Úteis
+[Comandos docker](https://gist.github.com/morvanabonin/862a973c330107540f28fab0f26181d8)
 ## Desenvolvimento:
 1. <span style="color:383E42"><b>Preparando ambiente</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
@@ -469,6 +472,105 @@ Linux, Docker
     </details> 
 
     ---
+
+11. <span style="color:383E42"><b>Redes</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Verificar modelos de rede
+        ```bash
+        docker network ls
+        ```
+        <!-- Saida -->
+        NETWORK ID     NAME      DRIVER    SCOPE
+        29...ae   bridge    bridge    local
+        ba...fe   host      host      local
+        a5...19   none      null      local
+    
+    - Inspecionar rede bridge
+        ```bash
+        docker network inspect bridge
+        ```
+
+    - Container com nerwork do tipo `none`
+        >Container não tem acesso a outros containers, nem acesso ao mundo exterior. Não tem acesso via rede.
+
+        - Exemplo Comando para criar um container 
+        ```bash
+        docker container run -d --net none debian
+        ```
+
+        - Comando para mostrar container com acesso a rede
+            >Cria container marcando para ser removido após execução(`--rm`) - `ash`(tipo bash mais leve) - -c "ifconfig"(comando que será executado)
+            ```bash
+            docker container run --rm alpine ash -c "ifconfig"
+            ```
+        
+        - Comando para criar container usando a rede none
+            ```baseh
+            docker container run --rm --net none alpine ash -c "ifconfig"
+            ```
+
+    - Interação entre conteiners
+        Criar containe `container1`
+        >Uso do `sleep` para deixar container rodando para executar o outro
+        ```bash
+        sudo docker container run -d --name container1 alpine sleep 1000
+        ```
+
+        Criar containe `container2`
+        ```bash
+        sudo docker container run -d --name container2 alpine sleep 1000
+        ```
+
+        Verificar ip container `container1` e `container2`
+        ```bash
+        docker container exec -it container1 ifconfig
+        ```
+        Verificar `container2` a partir do `container1`
+        ```bash
+        docker container exec -it container1 ping 172.17.0.3
+        ```
+
+        - Verficar acesso a site
+            ```bash
+            docker container exec -it container1 ping www.google.com
+            ```
+    - Rede tipo `bridge`
+        Criando docker network
+        ```bash
+        docker network create --driver bridge rede_nova
+        docker network ls
+        ```
+        Usando a rede criada
+        ```bash
+        ```
+        usando rede criada
+        ```bash
+        docker container run -d --name container3 --net rede_nova alpine sleep 1000
+        docker container exec -it container3 ifconfig
+        ```
+        verificar acesso `container3` para container1 que está em outra rede
+        >Percebemos que não temos acesso a outra rede
+            ```
+            docker container exec -it container3 ping 172.17.0.2
+            ```
+        Configurar container para se conectar a rede bridge
+            >Ficará duas interfaces de rede
+            ```bash
+            docker network connect bridge container3
+            docker container exec -it container3 ifconfig
+            docker container exec -it container3 ping 172.17.0.2
+            ```
+    - Rede tipo `host`
+        
+
+    </p>
+
+    </details> 
+
+    ---
+
 
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
