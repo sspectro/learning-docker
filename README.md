@@ -7,6 +7,7 @@ Linux, Docker
 
 ## Documentação - Links Úteis
 [Comandos docker](https://gist.github.com/morvanabonin/862a973c330107540f28fab0f26181d8)
+[Docke Postgres Image](https://hub.docker.com/_/postgres)
 ## Desenvolvimento:
 1. <span style="color:383E42"><b>Preparando ambiente</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
@@ -80,8 +81,7 @@ Linux, Docker
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
-    >Comando run sempre cria novos containers
-
+    >  Comando run sempre cria novos containers
     - Opções de comandos
         ```bash
         docker container run --help  
@@ -263,7 +263,7 @@ Linux, Docker
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
-    >Observação: `Dockerfile` deve ser escrito exatamente assim, primeira letra maiúscula e demais em minúscula
+    >  Observação: `Dockerfile` deve ser escrito exatamente assim, primeira letra maiúscula e demais em minúscula
     - Criar diretório e arquivo `primeiro-build/Dockerfile` - usa imagem `nginx` - Exibe mensagem no arquivo `index` do nginx
         ```
         FROM nginx:latest
@@ -563,7 +563,11 @@ Linux, Docker
             docker container exec -it container3 ping 172.17.0.2
             ```
     - Rede tipo `host`
-        
+        ```bash
+        docker container run -d --name container4 --net host alpine sleep 1000
+        docker container exec -it container4 ifconfig
+        ```
+    
 
     </p>
 
@@ -571,6 +575,126 @@ Linux, Docker
 
     ---
 
+## Projeto Envio de E-mails com Workers:
+1. <span style="color:383E42"><b>Serviço Banco de Dados</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criar pasta e arquivo `email-worker-compose/docker-compose.yml`
+        ```yml
+        version: '3'
+
+        services:
+        db:
+            image: postgres:9.6
+            environment:
+            - POSTGRES_HOST_AUTH_METHOD=trust
+
+        ```
+
+    - Rodar/subir serviço `db` e verificar - posicionar na pasta onde está o docker-compose.yml
+        ```bash
+        sudo docker-compose up -d
+        sudo docker-compose ps
+        ```
+
+    - Executar comando no container do serviço `db` - Listar os banco de dados
+        ```bash
+        docker-compose exec db psql -U postgres -c '\l'
+        ```
+
+    - Parar o serviço
+        ```bash
+        sudo docker-compose down
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+2. <span style="color:383E42"><b>Volumes</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criar pasta e arquivo `email-worker-compose/scripts/init.sql`
+        ```sql
+        create database email_sender;
+
+        -- Acessar database
+
+        -- Criar tabela
+        create table emails(
+            id serial not null,
+            data timestamp not null default current_timestamp,
+            assunto varchar(100) not null,
+            mensagem varchar(200) not null
+        );
+        ```
+
+    - Criar arquivo `email-worker-compose/scripts/check.sql`
+        ```sql
+        -- Lista databases
+        \l
+
+        -- Se conectar ao database
+        \c email_sender
+
+        -- Descrição da tabela de emails
+        \d emails
+        ```
+
+    - Editar `email-worker-compose/docker-compose.yml`
+        ```yaml
+        version: '3'
+        volumes:
+        dados:
+        services:
+        db:
+            image: postgres:9.6
+            environment:
+            - POSTGRES_HOST_AUTH_METHOD=trust
+            volumes:
+            # Volume dos dados
+            - dados:/var/lib/postgresql/data
+            # Scripts
+            - ./scripts:/scripts
+            - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ```
+
+    - Executar arquivo
+        `f` - file - `/scripts/cheq.sql` arquivo que será executado
+        ```bash
+        sudo docker-compose exec db psql -U postgres -f /scripts/check.sql
+        ```
+
+    - Em caso de erro ou resultado inesperado remova totalmente o volume criado e recrie
+        Cuidado com o comando de remover/apagar volume no uso do dia a dia.
+        ```bash
+        sudo docker-compose down -v
+        sudo docker-compose up -d
+
+        sudo docker-compose exec db psql -U postgres -f /scripts/check.sql
+        ```
+
+    </p>
+
+    </details> 
+
+    ---
+
+3. <span style="color:383E42"><b>Volumes</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Teste
+
+    </p>
+
+    </details> 
+
+    ---
 
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
