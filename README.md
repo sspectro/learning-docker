@@ -7,6 +7,7 @@ Linux, Docker
 
 ## Documentação - Links Úteis
 [Comandos docker](https://gist.github.com/morvanabonin/862a973c330107540f28fab0f26181d8)
+[Comandos docker Hostinger Tutoriais](https://www.hostinger.com.br/tutoriais/container-docker)
 [Docke Postgres Image](https://hub.docker.com/_/postgres)
 ## Desenvolvimento:
 1. <span style="color:383E42"><b>Preparando ambiente</b></span>
@@ -82,10 +83,60 @@ Linux, Docker
     <p>
 
     >  Comando run sempre cria novos containers
-    - Opções de comandos
+
+    - Baixar imagem
+        ```bash
+        docker pull nomeImagem
+        ```
+    
+    - Listar IDs numéricos de imagens disponíveis no seu sistema
+        ```bash
+        sudo docker images -q
+        ```
+    
+    - Remover imagem usando id ou nome da imagem
+        ```bash
+        docker image rm nomeimage
+        ```
+
+    - Rodar imagem `Ubuntu`
+        ```bash
+        docker run ubuntu
+
+        ```
+
+    - Executa uma imagem do `debian` com comando que verifica versão do `bash` da imagem
+        ```bash
+        docker container run debian bash --version
+        ```
+    
+    - Lista as imagens locais
+        ```bash
+        docker image ls
+        ```
+
+    - Lista as volumes locais
+        ```bash
+        docker volume ls
+        ```
+
+    - Opções de comandos container
         ```bash
         docker container run --help  
         ```
+
+    - Iniciar container
+        `-name MyContainer` é o nome que estamos dando ao processo de execução
+        `-it ubuntu bash` nome do container que estamos rodando
+        ```bash
+        docker run --name MyContainer -it ubuntu bash
+        ```
+
+    - Finalizar container - Diferente de `stop`
+        ```bash
+        sudo docker kill MyContainer
+        ```
+
     - Lista containers ativos	
         ```bash
         docker container ps
@@ -110,11 +161,6 @@ Linux, Docker
     - Verifica versão `bash`
         ```bash
         - bash --version
-        ```
-
-    - Executa uma imagem do `debian` com comando que verifica versão do `bash` da imagem
-        ```bash
-        docker container run debian bash --version
         ```
 
     - Acessar container no modo interativo -  `i` - acesso ao terminal `t`. Acesso ao terminal do container
@@ -142,19 +188,15 @@ Linux, Docker
         docker container start -ai mydeb
         ```
 
-    - Lista as imagens locais
+    - Iniciar o container em background
+        O parâmetro -d do docker container run indica ao Docker para iniciar o container em background.
         ```bash
-        docker image ls
+        docker container run -d --name ex-daemon-basic -p 8080:80 -v $(pwd)/html:/usr/share/nginx/html nginx
         ```
 
-    - Lista as volumes locais
+    - Ver processo principal de um container
         ```bash
-        docker volume ls
-        ```
-
-    - Remover imagem usando id ou nome da imagem
-        ```bash
-        docker image rm nomeimage
+        sudo docker top MyContainer
         ```
 
     </p>
@@ -684,15 +726,344 @@ Linux, Docker
 
     ---
 
-3. <span style="color:383E42"><b>Volumes</b></span>
+3. <span style="color:383E42"><b>Front-End</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
-    - Teste
+    - Inclusão do service `frontend` ao `docker-compose`
+        ```yaml
+        frontend:
+          image: nginx:1.13
+          volumes:
+            # Site
+            - ./web:/usr/share/nginx/html/
+          ports:
+            - 80:80
+        ```
 
+    - Criar pasta e arquivo `email-worker-compose/web/index.html`
+        ```html
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>E-mail Sender</title>
+
+        <style>
+            label{display: block;}
+            textarea, input{width: 400px;}
+        </style>
+        </head>
+        <body class="container">
+            <h1>E-mail Sender</h1>
+            <form action="">
+                <div>
+                    <label for="assunto">Assunto</label>
+                    <input type="text" name="assunto">
+                </div>
+                <div>
+                    <label for="mensagem">Mensagem</label>
+                    <textarea name="mensagem" id="" cols="50" rows="6"></textarea>
+                </div>
+
+                <div>
+                    <button>Enviar!</button>
+                </div>
+            </form>
+        </body>
+        </html>
+        ```
+
+    - Subir container/serviços
+        ```bash
+        sudo docker-compose up -d
+        ```
+        Verificar logs
+        ```bash
+        sudo docker-compose logs -f -t
+        ```
+    
+    - Testar
+        ```bash
+        sudo docker-compose ps
+        sudo docker-compose down
+        sudo docker-compose up -d
+        ```
     </p>
 
     </details> 
+
+    ---
+
+4. <span style="color:383E42"><b>Filas</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criar pasta e arquivo `email-worker-compose/app/app.sh`
+        ```bash
+        #!/bin/sh
+
+        pip install bottle==0.12.13
+        python -u sender.py
+        ```
+
+    - Criar arquivo `email-worker-compose/app/sender.py`
+        ```python
+        from bottle import route, run, request
+        # Aponta post para rota raiz
+        @route('/', method='POST')
+        def send():
+            # Recebe os dados vindo do formulário em index.html
+            assunto = request.forms.get('assunto')
+            mensagem = request.forms.get('mensagem')
+            return 'Mensagem enfileirada! Assunto:{} Mensagem:{}'.format(
+                assunto, mensagem
+            )
+
+        if __name__ == '__main__':
+            run(host='0.0.0.0', port=8080, debug=True)
+        ```
+    
+    - Inclusão de action em `email-worker-compose/web/index.html`
+        ```html
+        <!-- ... -->
+        <body class="container">
+        <h1>E-mail Sender</h1>
+        <form action="http://localhost:8080" method="POST">
+        <!-- ... -->
+        ```
+    
+    - Inclusão de serviço `frontend`
+        Observação: O comando `command: ./app.sh` gerar erro de permissão no diretório/pasta
+        Uma das soluções seria dar as permissões. Mas modificando o comando, também funciona `command: bash ./app.sh`
+        ```yaml
+        <!-- ... -->
+        app:
+            image: python:3.6
+            volumes:
+            # Applicação
+            - ./app:/app
+            working_dir: /app
+            command: bash ./app.sh
+            ports:
+            - 8080:8080
+        ```
+
+    - Parar serviços e reiniciar
+        ```bash
+        sudo docker-compose down
+        sudo docker-compose up -d
+        ```
+    - Testar http://localhost:8080/
+        Inserir assunto e mensagem
+        Retorno na página: 
+        `Mensagem enfileirada! Assunto:Teste Mensagem:badrfadfadsfsda` 
+
+    </p>
+
+    </details>
+
+    ---
+
+4. <span style="color:383E42"><b>Proxy reverso</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criação de pasta e arquivo `email-worker-compose/nginx/default.conf`
+        ```conf
+        server {
+            listen 80;
+            server_name localhost;
+            location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+            }
+            error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+            root /usr/share/nginx/html;
+            }
+            location /api { 
+            proxy_pass http://app:8080/;
+            proxy_http_version 1.1;
+            }
+        }
+        ```
+    
+    - Inclusão de configuração proxy reverso no `docker-compose` 
+        e exclusão da configuração de porta do serviço app
+        ```yaml
+        version: '3'
+        volumes:
+        dados:
+        services:
+        db:
+            image: postgres:9.6
+            environment:
+            - POSTGRES_HOST_AUTH_METHOD=trust
+            volumes:
+            # Volume dos dados
+            - dados:/var/lib/postgresql/data
+            # Scripts
+            - ./scripts:/scripts
+            - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+        frontend:
+            image: nginx:1.13
+            volumes:
+            # Site
+            - ./web:/usr/share/nginx/html
+            # Configuração do proxy reverso - Lê o arquivo criado ao invés do padrão no container
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            ports:
+            - 80:80
+        app:
+            image: python:3.6
+            volumes:
+            # Applicação
+            - ./app:/app
+            working_dir: /app
+            command: bash ./app.sh
+        ```
+
+
+    - Modificar action form em `index.html`
+        ```html
+        <!-- ... -->
+        <h1>E-mail Sender</h1>
+        <form action="http://localhost/api" method="POST">
+            <div>
+        <!-- ... -->
+        ```
+    
+    - Testar
+        ```bash
+        sudo docker-compose down
+        sudo docker-compose up -d
+        ```
+        Acessar localhost
+        Após submeter o form será redirecionado para localhost/api
+
+    </p>
+
+    </details>
+
+    ---
+
+5. <span style="color:383E42"><b>Redes</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Incluído configuração de rede em `email-worker-compose/docker-compose.yml`
+        ```yaml
+        version: '3'
+        volumes:
+        dados:
+        networks:
+        banco:
+        web:
+        services:
+        db:
+            image: postgres:9.6
+            environment:
+            - POSTGRES_HOST_AUTH_METHOD=trust
+            volumes:
+            # Volume dos dados
+            - dados:/var/lib/postgresql/data
+            # Scripts
+            - ./scripts:/scripts
+            - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+            networks:
+            - banco
+        frontend:
+            image: nginx:1.13
+            volumes:
+            # Site
+            - ./web:/usr/share/nginx/html/
+            # Configuração do proxy reverso - Lê o arquivo criado ao invés do padrão no container
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            ports:
+            - 80:80
+            networks:
+            - web
+            depends_on:
+            - app
+        app:
+            image: python:3.6
+            volumes:
+            # Applicação
+            - ./app:/app
+            working_dir: /app
+            command: bash ./app.sh
+            networks:
+            - banco
+            - web
+            depends_on:
+            - db
+        ```
+
+    - Incluído dependência `psycopg2` em `email-worker-compose/app/app.sh`
+        ```bash
+        #!/bin/sh
+
+        pip install bottle==0.12.13 psycopg2==2.7.1
+        python -u sender.py
+        ```
+
+    - Incluída função para inclusão de asssunto e mensagem no banco de dados
+        ```python
+        import psycopg2
+
+        DSN = 'dbname=email_sender user=postgres host=db'
+        SQL = 'INSERT INTO emails (assunto, mensagem) VALUES(%s, %s)'
+
+        def register_message(assunto, mensagem):
+            conn = psycopg2.connect(DSN)
+            cur = conn.cursor()
+            cur.execute(SQL, (assunto, mensagem))
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            print('Mensagem registrada!')
+
+
+        from bottle import route, run, request
+        # Aponta post para rota raiz
+        @route('/', method='POST')
+        def send():
+            # Recebe os dados vindo do formulário em index.html
+            assunto = request.forms.get('assunto')
+            mensagem = request.forms.get('mensagem')
+
+            register_message(assunto, mensagem)
+            return 'Mensagem enfileirada! Assunto:{} Mensagem:{}'.format(
+                assunto, mensagem
+            )
+
+        if __name__ == '__main__':
+            run(host='0.0.0.0', port=8080, debug=True)
+        ```
+
+    - Testar
+        ```bash
+        sudo docker-compose down
+        sudo docker-compose up -d
+
+        sudo docker-compose logs -f -t
+        ```
+    
+    - No navegador -> http://localhost/
+        >Enviar assunto e mensagem
+    
+    - Verificar na base de dados
+        ```bash
+        sudo docker-compose exec db psql -U postgres -d email_sender -c 'select * from emails'
+        ```
+
+
+    </p>
+
+    </details>
 
     ---
 
