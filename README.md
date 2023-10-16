@@ -1218,6 +1218,54 @@ Linux, Docker
 
     ---
 
+7. <span style="color:383E42"><b>Múltiplas Instâncias</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Criação arquivo `email-worker-compose/worker/Dockerfile`
+        ```Dockerfile
+        FROM python:3.6
+        LABEL maintainer 'Cristiano Mendonça <cirstiano at cristtiano.mendonca@gmail.com>'
+        # Configurado para não usar buffer
+        ENV PYTHONUNBUFFERED 1
+        RUN pip install redis==2.10.5
+        ENTRYPOINT ["/usr/local/bin/python"]
+        ```
+
+    - Alterado `docker-compose` para usar o Dockerfile
+        ```yaml
+        worker:
+            build: worker
+            volumes:
+            # worker
+            - ./worker:/worker
+            working_dir: /worker
+            command: worker.py
+            networks:
+            - fila
+            depends_on:
+            - queue
+            - app
+        ```
+
+    - Inclusão mensagem console em ``
+        ```python
+            r = redis.Redis(host='queue', port=6379, db=0)
+            print('Aguardando mensagens...')
+        ```
+
+    - Testar informando quantas instâncias `worker` deseja
+        ```bash
+        sudo docker-compose up -d --scale worker=3
+        sudo docker-compose logs -f -t worker
+        ```
+
+    </p>
+
+    </details>
+
+    ---
+
 
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
