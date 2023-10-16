@@ -1067,6 +1067,158 @@ Linux, Docker
 
     ---
 
+6. <span style="color:383E42"><b>Wordkers</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Adicionar `network` em `email-worker-compose/docker-compose.yml`
+        ```yaml
+        version: '3'
+        volumes:
+        dados:
+        networks:
+        banco:
+        web:
+        fila:
+        services:
+        db:
+            image: postgres:9.6
+            environment:
+            - POSTGRES_HOST_AUTH_METHOD=trust
+            volumes:
+            # Volume dos dados
+            - dados:/var/lib/postgresql/data
+            # Scripts
+            - ./scripts:/scripts
+            - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+            networks:
+            - banco
+        frontend:
+            image: nginx:1.13
+            volumes:
+            # Site
+            - ./web:/usr/share/nginx/html/
+            # Configuração do proxy reverso - Lê o arquivo criado ao invés do padrão no container
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            ports:
+            - 80:80
+            networks:
+            - web
+            depends_on:
+            - app
+        app:
+            image: python:3.6
+            volumes:
+            # Applicação
+            - ./app:/app
+            working_dir: /app
+            command: bash ./app.sh
+            networks:
+            - banco
+            - web
+            - fila
+            depends_on:
+            - db
+        queue:
+            image: redis:3.2
+            networks:
+            - fila
+        worker:
+            image: python:3.6
+            volumes:
+            # worker
+            - ./worker:/worker
+            working_dir: /worker
+            command: bash ./app.sh
+            depends_on:
+            - queue
+            - app       
+        ```
+
+    - Incluir dependência `redis` em `email-worker-compose/app/app.sh`
+        ```bash
+        #!/bin/sh
+
+        pip install bottle==0.12.13 psycopg2 --upgrade redis==2.10.5
+        python -u sender.py
+        ```
+
+    - Em `email-worker-compose/app/sender.py`
+        Removido import `route, run`, incluído import `redis e json`
+        Criada classe `Sender`
+        ```python
+        import psycopg2
+        import redis
+        import json
+        from bottle import Bottle, request
+
+
+        class Sender(Bottle):
+            def __init__(self):
+                
+                super().__init__()
+                self.route('/', method='POST', callback=self.send)
+                self.fila = redis.StrictRedis(host='queue', port=6379, db=0)
+                DSN = 'dbname=email_sender user=postgres host=db'
+                self.conn = psycopg2.connect(DSN)
+            
+            def register_message(self, assunto, mensagem):
+                SQL = 'INSERT INTO emails (assunto, mensagem) VALUES (%s, %s)'
+                cur = self.conn.cursor()
+                cur.execute(SQL, (assunto, mensagem))
+                self.conn.commit()
+                cur.close()
+
+                msg = {'assunto': assunto, 'mensagem': mensagem}
+                self.fila.rpush('sender', json.dumps(msg))
+                print('Mensagem registrada !')
+
+            def send(self):
+                assunto = request.forms.get('assunto')
+                mensagem = request.forms.get('mensagem')
+                self.register_message(assunto, mensagem)
+                return 'Mensagem enfileirada ! Assunto: {} Mensagem: {}'.format(
+                assunto, mensagem)
+
+        if __name__ == '__main__':
+            sender = Sender()
+            sender.run(host='0.0.0.0', port=8080, debug=True)
+        ```
+
+    - Criar pasta e arquivo `email-worker-compose/worker/app.sh` e `email-worker-compose/worker/worker.py`
+        ```bash
+        #!/bin/sh
+        pip install redis==2.10.5
+        python -u worker.py
+        ```
+        ```python
+        import redis
+        import json
+        from time import sleep
+        from random import randint
+
+        if __name__ == '__main__':
+            r = redis.Redis(host='queue', port=6379, db=0)
+            while True:
+                mensagem = json.loads(r.blpop('sender')[1])
+                print('Mandando a mensagem:', mensagem['assunto'])
+                sleep(randint(15, 45))
+                print('Mensagem', mensagem['assunto'], 'enviada')
+        ```
+
+    - Teste
+        ```bash
+        docker-compose up -d
+        docker-compose logs -f -t
+        ```
+
+    </p>
+
+    </details>
+
+    ---
+
+
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
 >
