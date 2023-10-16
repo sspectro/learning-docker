@@ -1222,7 +1222,7 @@ Linux, Docker
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
 >
->>[<img src="readmeImages/githubIcon.png">](https://github.com/sspectro "Meu perfil no github")
+>>[<img src="./readmeImages/githubIcon.png">](https://github.com/sspectro "Meu perfil no github")
 >
 >><a href="https://linkedin.com/in/cristiano-m-gueivara/"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a> 
 >
