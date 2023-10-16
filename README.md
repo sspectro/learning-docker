@@ -1379,6 +1379,37 @@ Linux, Docker
 
     ---
 
+10. <span style="color:383E42"><b>Override</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+    >Sobrescreve o environment do docker-compose principal
+
+    - Criar arquivo `email-worker-compose/Docker-compose.override.yml`
+        ```yaml
+        version: '2'
+        services:
+            app:
+            environment:
+            - DB_NAME=email_sender
+        ```
+        
+    - Testar informando quantas instâncias `worker` deseja
+        ```bash
+        sudo docker-compose up -d --scale worker=3
+        sudo docker-compose logs -f -t worker
+        ```
+
+        Verificar no database
+        ```bash
+        sudo docker-compose exec db psql -U postgres -d email_sender -c 'select * from emails'
+        ```
+
+    </p>
+
+    </details>
+
+    ---
+
 
 ## Meta
 ><span style="color:383E42"><b>Cristiano Mendonça Gueivara</b> </span>
