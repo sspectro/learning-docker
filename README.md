@@ -1416,7 +1416,7 @@ Linux, Docker
 >
 >>[<img src="./readmeImages/githubIcon.png"> - Meu perfil no github](https://github.com/sspectro "Meu perfil no github")
 >
->><a href="https://linkedin.com/in/cristiano-m-gueivara/"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white"> Meu Linkedin</a> 
+>><a href="https://linkedin.com/in/cristiano-m-gueivara/"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white"> - Meu Linkedin</a> 
 >
 >>[<img src="https://sspectro.github.io/images/cristiano.jpg" height="25" width="25"> - Minha Página Github](https://sspectro.github.io/#home "Minha Página no github")<br>
 
