@@ -866,7 +866,7 @@ Linux, Docker
 
     ---
 
-4. <span style="color:383E42"><b>Proxy reverso</b></span>
+5. <span style="color:383E42"><b>Proxy reverso</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
@@ -949,7 +949,7 @@ Linux, Docker
 
     ---
 
-5. <span style="color:383E42"><b>Redes</b></span>
+6. <span style="color:383E42"><b>Redes</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
@@ -1067,7 +1067,7 @@ Linux, Docker
 
     ---
 
-6. <span style="color:383E42"><b>Wordkers</b></span>
+7. <span style="color:383E42"><b>Wordkers</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
@@ -1109,16 +1109,17 @@ Linux, Docker
         app:
             image: python:3.6
             volumes:
-            # Applicação
-            - ./app:/app
+                # Applicação
+                - ./app:/app
             working_dir: /app
             command: bash ./app.sh
             networks:
-            - banco
-            - web
-            - fila
+                - banco
+                - web
+                - fila
             depends_on:
-            - db
+                - db
+                - queue
         queue:
             image: redis:3.2
             networks:
@@ -1218,7 +1219,7 @@ Linux, Docker
 
     ---
 
-7. <span style="color:383E42"><b>Múltiplas Instâncias</b></span>
+8. <span style="color:383E42"><b>Múltiplas Instâncias</b></span>
     <details><summary><span style="color:Chocolate">Detalhes</span></summary>
     <p>
 
@@ -1248,7 +1249,7 @@ Linux, Docker
             - app
         ```
 
-    - Inclusão mensagem console em ``
+    - Inclusão mensagem console em `email-worker-compose/worker/worker.py`
         ```python
             r = redis.Redis(host='queue', port=6379, db=0)
             print('Aguardando mensagens...')
@@ -1258,6 +1259,118 @@ Linux, Docker
         ```bash
         sudo docker-compose up -d --scale worker=3
         sudo docker-compose logs -f -t worker
+        ```
+
+    </p>
+
+    </details>
+
+    ---
+
+9. <span style="color:383E42"><b>Boas práticas - Variáveis de ambiente</b></span>
+    <details><summary><span style="color:Chocolate">Detalhes</span></summary>
+    <p>
+
+    - Editar `email-worker-compose/app/sender.py`
+        ```python
+        import psycopg2
+        import redis
+        import json
+        # import os para acesso as variáveis de ambiente
+        import os
+        from bottle import Bottle, request
+
+
+        class Sender(Bottle):
+            def __init__(self):
+                
+                super().__init__()
+                self.route('/', method='POST', callback=self.send)
+                redis_host = os.getenv('REDIS_HOST', 'queue') 
+                # self.fila = redis.StrictRedis(host='queue', port=6379, db=0)
+                self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
+
+
+                db_host = os.getenv('DB_HOST', 'db')
+                db_user = os.getenv('DB_USER', 'postgres')
+                db_name = os.getenv('DB_NAME', 'sender')
+                dsn = f'dbname={db_name} user={db_user} host={db_host}'
+                #DSN = 'dbname=email_sender user=postgres host=db'
+                self.conn = psycopg2.connect(dsn)
+            
+            def register_message(self, assunto, mensagem):
+                SQL = 'INSERT INTO emails (assunto, mensagem) VALUES (%s, %s)'
+                cur = self.conn.cursor()
+                cur.execute(SQL, (assunto, mensagem))
+                self.conn.commit()
+                cur.close()
+
+                msg = {'assunto': assunto, 'mensagem': mensagem}
+                self.fila.rpush('sender', json.dumps(msg))
+                print('Mensagem registrada !')
+
+            def send(self):
+                assunto = request.forms.get('assunto')
+                mensagem = request.forms.get('mensagem')
+                self.register_message(assunto, mensagem)
+                return 'Mensagem enfileirada ! Assunto: {} Mensagem: {}'.format(
+                assunto, mensagem)
+
+        if __name__ == '__main__':
+            sender = Sender()
+            sender.run(host='0.0.0.0', port=8080, debug=True)
+        ```
+
+    - Editar `email-worker-compose/worker/worker.py`
+        ```python
+        import redis
+        import json
+        import os
+        from time import sleep
+        from random import randint
+
+        if __name__ == '__main__':
+            redis_host = os.getenv('REDIS_HOST', 'queue') 
+            # r = redis.Redis(host='queue', port=6379, db=0)
+            r = redis.Redis(host=redis_host, port=6379, db=0)
+
+            print('Aguardando mensagens...')
+            while True:
+                mensagem = json.loads(r.blpop('sender')[1])
+                print('Mandando a mensagem:', mensagem['assunto'])
+                sleep(randint(15, 45))
+                print('Mensagem', mensagem['assunto'], 'enviada')
+        ```
+
+    - Editar `email-worker-compose/docker-compose.yml` - Incluir `environment`
+        ```yaml
+        app:
+            image: python:3.6
+            volumes:
+            # Applicação
+            - ./app:/app
+            working_dir: /app
+            command: bash ./app.sh
+            networks:
+            - banco
+            - web
+            - fila
+            depends_on:
+            - db
+            - queue
+            environment:
+            - DB_NAME=email_sender
+        ```
+
+    - Testar informando quantas instâncias `worker` deseja
+        ```bash
+        sudo docker-compose up -d --scale worker=3
+        sudo docker-compose logs -f -t worker
+        ```
+
+        Verificar no database
+        ```bash
+        sudo docker-compose exec db psql -U postgres -d email_sender -c 'select * from emails'
         ```
 
     </p>

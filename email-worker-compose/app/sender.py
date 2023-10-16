@@ -1,6 +1,8 @@
 import psycopg2
 import redis
 import json
+# import os para acesso as variáveis de ambiente
+import os
 from bottle import Bottle, request
 
 
@@ -9,9 +11,17 @@ class Sender(Bottle):
         
         super().__init__()
         self.route('/', method='POST', callback=self.send)
-        self.fila = redis.StrictRedis(host='queue', port=6379, db=0)
-        DSN = 'dbname=email_sender user=postgres host=db'
-        self.conn = psycopg2.connect(DSN)
+        redis_host = os.getenv('REDIS_HOST', 'queue') 
+        # self.fila = redis.StrictRedis(host='queue', port=6379, db=0)
+        self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
+
+
+        db_host = os.getenv('DB_HOST', 'db')
+        db_user = os.getenv('DB_USER', 'postgres')
+        db_name = os.getenv('DB_NAME', 'sender')
+        dsn = f'dbname={db_name} user={db_user} host={db_host}'
+        #DSN = 'dbname=email_sender user=postgres host=db'
+        self.conn = psycopg2.connect(dsn)
     
     def register_message(self, assunto, mensagem):
         SQL = 'INSERT INTO emails (assunto, mensagem) VALUES (%s, %s)'
